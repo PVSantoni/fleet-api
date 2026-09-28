@@ -6,8 +6,8 @@ Tout le reste est à écrire — voir le TD 1.
 
 import pytest
 
-from fleet_api.models import Position
-from fleet_api.telemetry import battery_percentage, distance_m
+from fleet_api.models import Position, Reading, RobotState
+from fleet_api.telemetry import battery_percentage, distance_m, is_low_battery, path_length_m, average_speed_mps, estimate_runtime_minutes, median_voltage_mv, robot_state, detect_voltage_dropouts, fleet_summary
 
 # ---------------------------------------------------------------------------
 # Exemple 1 — un test simple, avec un cas nominal et les deux bornes.
@@ -59,3 +59,70 @@ def test_battery_percentage_rejette_des_bornes_incoherentes():
 # Écrivez-les en vous appuyant sur les docstrings, qui font foi.
 # Trois de ces fonctions ne respectent pas leur spécification.
 # ---------------------------------------------------------------------------
+
+
+def test_low_battery_pct():
+    """Test de la fonction is_low_battery."""
+    
+
+    assert is_low_battery(18) is True
+    assert is_low_battery(20) is True
+    assert is_low_battery(22) is False
+    
+
+def test_path_length_m():
+    """Test de la fonction path_length_m."""
+    positions = [Position(0, 0), Position(3, 4), Position(6, 8)]
+    assert path_length_m(positions) == pytest.approx(10.0)
+    assert path_length_m([Position(0, 0)]) == 0.0
+    assert path_length_m([]) == 0.0
+
+
+def test_average_speed_mps():
+    """La vitesse moyenne est indisponible pour une durée non positive."""
+    assert average_speed_mps(10.0, 5.0) == pytest.approx(2.0)
+    assert average_speed_mps(10.0, 0.0) is None
+    assert average_speed_mps(10.0, -1.0) is None
+        
+        
+
+def test_estimate_runtime_minutes():
+    """Test de la fonction estimate_runtime_minutes."""
+    assert estimate_runtime_minutes(50, 5) == 10.0
+    assert estimate_runtime_minutes(100, 10) == 10.0
+    assert estimate_runtime_minutes(0, 5) == 0.0
+    assert estimate_runtime_minutes(50, 0) is None
+    assert estimate_runtime_minutes(50, -5) is None
+
+
+def test_median_voltage_mv():
+    """La médiane fonctionne pour un nombre impair ou pair de mesures."""
+    assert median_voltage_mv([]) is None
+
+    readings = [
+        Reading("r1", 1.0, 12_000, Position(0, 0)),
+        Reading("r1", 2.0, 11_000, Position(0, 0)),
+        Reading("r1", 3.0, 11_500, Position(0, 0)),
+    ]
+    assert median_voltage_mv(readings) == 11_500
+
+    readings_pair = [
+        Reading("r1", 1.0, 13_000, Position(0, 0)),
+        Reading("r1", 2.0, 10_000, Position(0, 0)),
+        Reading("r1", 3.0, 12_000, Position(0, 0)),
+        Reading("r1", 4.0, 11_000, Position(0, 0)),
+    ]
+    assert median_voltage_mv(readings_pair) == 11_500
+
+
+def test_robot_state():
+    """Les états suivent l'ordre de priorité indiqué dans la docstring."""
+    offline = Reading("r1", 0.0, 10_500, Position(0, 0))
+    charging = Reading("r1", 100.0, 10_500, Position(0, 0), is_charging=True)
+    low_battery = Reading("r1", 100.0, 10_500, Position(0, 0))
+    operational = Reading("r1", 100.0, 12_600, Position(0, 0))
+
+    assert robot_state(offline, now_s=121.0) is RobotState.OFFLINE
+    assert robot_state(charging, now_s=100.0) is RobotState.CHARGING
+    assert robot_state(low_battery, now_s=100.0) is RobotState.LOW_BATTERY
+    assert robot_state(operational, now_s=100.0) is RobotState.OPERATIONAL

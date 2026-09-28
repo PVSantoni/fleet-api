@@ -83,7 +83,7 @@ def is_low_battery(battery_pct: float, threshold_pct: float = LOW_BATTERY_PCT) -
         False
     """
     # TODO: à tester
-    return battery_pct < threshold_pct
+    return battery_pct <= threshold_pct
 
 
 def distance_m(a: Position, b: Position) -> float:
@@ -125,7 +125,7 @@ def path_length_m(positions: list[Position]) -> float:
     """
     # TODO: à tester
     total = 0.0
-    for i in range(len(positions) - 2):
+    for i in range(len(positions) - 1):
         total += distance_m(positions[i], positions[i + 1])
     return total
 
