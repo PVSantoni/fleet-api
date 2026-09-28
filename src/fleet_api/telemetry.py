@@ -283,6 +283,12 @@ def fleet_summary(
     """
     # TODO: à tester
     levels = [battery_percentage(r.voltage_mv) for r in readings]
+    if not levels:
+        return {
+            "robot_count": 0,
+            "average_battery_pct": 0.0,
+            "low_battery_count": 0,
+        }
     return {
         "robot_count": len(readings),
         "average_battery_pct": round(sum(levels) / len(levels), 1),

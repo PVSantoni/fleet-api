@@ -7,7 +7,18 @@ Tout le reste est à écrire — voir le TD 1.
 import pytest
 
 from fleet_api.models import Position, Reading, RobotState
-from fleet_api.telemetry import battery_percentage, distance_m, is_low_battery, path_length_m, average_speed_mps, estimate_runtime_minutes, median_voltage_mv, robot_state, detect_voltage_dropouts, fleet_summary
+from fleet_api.telemetry import (
+    average_speed_mps,
+    battery_percentage,
+    detect_voltage_dropouts,
+    distance_m,
+    estimate_runtime_minutes,
+    fleet_summary,
+    is_low_battery,
+    median_voltage_mv,
+    path_length_m,
+    robot_state,
+)
 
 # ---------------------------------------------------------------------------
 # Exemple 1 — un test simple, avec un cas nominal et les deux bornes.
@@ -126,3 +137,24 @@ def test_robot_state():
     assert robot_state(charging, now_s=100.0) is RobotState.CHARGING
     assert robot_state(low_battery, now_s=100.0) is RobotState.LOW_BATTERY
     assert robot_state(operational, now_s=100.0) is RobotState.OPERATIONAL
+    
+def test_fleet_summary_empty():
+    """Une flotte vide retourne un résumé vide valide."""
+    assert fleet_summary([]) == {
+        "robot_count": 0,
+        "average_battery_pct": 0.0,
+        "low_battery_count": 0,
+    }
+
+
+def test_detect_voltage_dropouts():
+    """Seules les baisses strictement supérieures à la limite sont signalées."""
+    readings = [
+        Reading("r1", 1.0, 12_000, Position(0, 0)),
+        Reading("r1", 2.0, 11_900, Position(0, 0)),
+        Reading("r1", 3.0, 11_700, Position(0, 0)),
+        Reading("r1", 4.0, 11_800, Position(0, 0)),
+    ]
+
+    assert detect_voltage_dropouts(readings, max_drop_mv=150) == [2]
+    assert detect_voltage_dropouts([], max_drop_mv=150) == []
