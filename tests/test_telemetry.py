@@ -29,7 +29,7 @@ def test_battery_percentage_bornes_et_cas_nominal():
     """La conversion est linéaire et bornée à [0, 100]."""
     assert battery_percentage(12_600) == 100.0
     assert battery_percentage(10_500) == 0.0
-    assert battery_percentage(11_550) == 42.0
+    assert battery_percentage(11_550) == 50.0
     # Hors bornes : on sature, on ne dépasse pas.
     assert battery_percentage(13_000) == 100.0
     assert battery_percentage(9_000) == 0.0
@@ -74,12 +74,11 @@ def test_battery_percentage_rejette_des_bornes_incoherentes():
 
 def test_low_battery_pct():
     """Test de la fonction is_low_battery."""
-    
 
     assert is_low_battery(18) is True
     assert is_low_battery(20) is True
     assert is_low_battery(22) is False
-    
+
 
 def test_path_length_m():
     """Test de la fonction path_length_m."""
@@ -94,8 +93,7 @@ def test_average_speed_mps():
     assert average_speed_mps(10.0, 5.0) == pytest.approx(2.0)
     assert average_speed_mps(10.0, 0.0) is None
     assert average_speed_mps(10.0, -1.0) is None
-        
-        
+
 
 def test_estimate_runtime_minutes():
     """Test de la fonction estimate_runtime_minutes."""
@@ -137,7 +135,8 @@ def test_robot_state():
     assert robot_state(charging, now_s=100.0) is RobotState.CHARGING
     assert robot_state(low_battery, now_s=100.0) is RobotState.LOW_BATTERY
     assert robot_state(operational, now_s=100.0) is RobotState.OPERATIONAL
-    
+
+
 def test_fleet_summary_empty():
     """Une flotte vide retourne un résumé vide valide."""
     assert fleet_summary([]) == {

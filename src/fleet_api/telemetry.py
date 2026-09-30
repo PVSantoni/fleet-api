@@ -59,8 +59,15 @@ def battery_percentage(
     """
     if full_mv <= empty_mv:
         raise ValueError("full_mv doit être strictement supérieur à empty_mv")
-    ratio = (voltage_mv - empty_mv) / (full_mv - empty_mv)
-    return round(max(0.0, min(1.0, ratio)) * 100, 1)
+
+    span = full_mv - empty_mv
+    if voltage_mv <= empty_mv:
+        return 0.0
+    if voltage_mv >= full_mv:
+        return 100.0
+
+    ratio = (voltage_mv - empty_mv) / span
+    return round(ratio * 100, 1)
 
 
 def is_low_battery(battery_pct: float, threshold_pct: float = LOW_BATTERY_PCT) -> bool:
